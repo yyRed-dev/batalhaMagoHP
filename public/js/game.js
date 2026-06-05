@@ -1,4 +1,4 @@
-var state = {
+const state = {
   phase: 'loading',
   pack: [],
   selectedCards: [],
@@ -317,9 +317,9 @@ function nextRound() {
   ).textContent = state.round
 
   log(
-    '— Rodada ' + state.round + ' —',
-    'info'
-  )
+  `— Rodada ${state.round} —`,
+  'info'
+)
 
   state.waiting = false
 

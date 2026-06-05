@@ -1,16 +1,16 @@
 function getHouseColor(h) {
-  if (h == 'Gryffindor') return '#6b1010'
-  if (h == 'Slytherin') return '#0a3018'
-  if (h == 'Hufflepuff') return '#3a2800'
-  if (h == 'Ravenclaw') return '#0a1a3a'
+  if (h === 'Gryffindor') return '#6b1010'
+  if (h === 'Slytherin') return '#0a3018'
+  if (h === 'Hufflepuff') return '#3a2800'
+  if (h === 'Ravenclaw') return '#0a1a3a'
   return '#1e1040'
 }
 
 function getHouseEmoji(h) {
-  if (h == 'Gryffindor') return '🦁'
-  if (h == 'Slytherin') return '🐍'
-  if (h == 'Hufflepuff') return '🦡'
-  if (h == 'Ravenclaw') return '🦅'
+  if (h === 'Gryffindor') return '🦁'
+  if (h === 'Slytherin') return '🐍'
+  if (h === 'Hufflepuff') return '🦡'
+  if (h === 'Ravenclaw') return '🦅'
   return '✦'
 }
 
