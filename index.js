@@ -2,73 +2,87 @@ const express = require('express')
 const fetch = require('node-fetch')
 
 const app = express()
+
 app.use(express.static('public'))
 app.use(express.json())
 
 // pega pack de cartas aleatorias
 app.get('/api/pack', async (req, res) => {
   try {
-    var pg = Math.floor(Math.random() * 8) + 1
-    var d = await fetch('https://api.potterdb.com/v1/characters?page[size]=100&page[number]=' + pg)
-    var r = await d.json()
+    var pageNumber = Math.floor(Math.random() * 8) + 1
 
-    var tmp = []
-    for (var i = 0; i < r.data.length; i++) {
-      var c = r.data[i]
-      var a = c.attributes
-      if (!a.name || a.name == '' || !a.image) continue
+    var response = await fetch(
+      'https://api.potterdb.com/v1/characters?page[size]=100&page[number]=' + pageNumber
+    )
 
-      var pw = 50
-      if (a.house == 'Gryffindor') pw = 90
-      if (a.house == 'Slytherin') pw = 85
-      if (a.house == 'Hufflepuff') pw = 75
-      if (a.house == 'Ravenclaw') pw = 80
+    var responseData = await response.json()
 
-      var mg = 50
-      if (a.species == 'human') mg = 70
-      if (a.species == 'half-giant') mg = 88
-      if (a.species == 'giant') mg = 95
-      if (a.species == 'house elf') mg = 82
-      if (a.species == 'ghost') mg = 60
-      if (a.species == 'werewolf') mg = 91
-      if (a.species == 'vampire') mg = 87
-      if (a.species == 'centaur') mg = 78
+    var characters = []
 
-      var df = 50
-      if (a.ancestry == 'pure-blood') df = 90
-      if (a.ancestry == 'half-blood') df = 75
-      if (a.ancestry == 'muggle-born') df = 70
-      if (a.ancestry == 'muggle') df = 40
-      if (a.ancestry == 'squib') df = 35
+    for (var index = 0; index < responseData.data.length; index++) {
+      var character = responseData.data[index]
+      var attributes = character.attributes
 
-      var hp = df + Math.floor(Math.random() * 20) + 80
+      if (!attributes.name || attributes.name == '' || !attributes.image) continue
 
-      var obj = {}
-      obj.id = c.id
-      obj.name = a.name
-      obj.house = a.house || 'Unknown'
-      obj.species = a.species || 'Unknown'
-      obj.ancestry = a.ancestry || 'Unknown'
-      obj.image = a.image
-      obj.power = pw
-      obj.magic = mg
-      obj.defense = df
-      obj.hp = hp
-      obj.maxHp = hp
+      var power = 50
 
-      tmp.push(obj)
+      if (attributes.house == 'Gryffindor') power = 90
+      if (attributes.house == 'Slytherin') power = 85
+      if (attributes.house == 'Hufflepuff') power = 75
+      if (attributes.house == 'Ravenclaw') power = 80
+
+      var magic = 50
+
+      if (attributes.species == 'human') magic = 70
+      if (attributes.species == 'half-giant') magic = 88
+      if (attributes.species == 'giant') magic = 95
+      if (attributes.species == 'house elf') magic = 82
+      if (attributes.species == 'ghost') magic = 60
+      if (attributes.species == 'werewolf') magic = 91
+      if (attributes.species == 'vampire') magic = 87
+      if (attributes.species == 'centaur') magic = 78
+
+      var defense = 50
+
+      if (attributes.ancestry == 'pure-blood') defense = 90
+      if (attributes.ancestry == 'half-blood') defense = 75
+      if (attributes.ancestry == 'muggle-born') defense = 70
+      if (attributes.ancestry == 'muggle') defense = 40
+      if (attributes.ancestry == 'squib') defense = 35
+
+      var hp = defense + Math.floor(Math.random() * 20) + 80
+
+      var characterData = {}
+
+      characterData.id = character.id
+      characterData.name = attributes.name
+      characterData.house = attributes.house || 'Unknown'
+      characterData.species = attributes.species || 'Unknown'
+      characterData.ancestry = attributes.ancestry || 'Unknown'
+      characterData.image = attributes.image
+      characterData.power = power
+      characterData.magic = magic
+      characterData.defense = defense
+      characterData.hp = hp
+      characterData.maxHp = hp
+
+      characters.push(characterData)
     }
 
     // embaralha
-    for (var x = tmp.length - 1; x > 0; x--) {
-      var y = Math.floor(Math.random() * (x + 1))
-      var z = tmp[x]; tmp[x] = tmp[y]; tmp[y] = z
+    for (var currentIndex = characters.length - 1; currentIndex > 0; currentIndex--) {
+      var randomIndex = Math.floor(Math.random() * (currentIndex + 1))
+
+      var temporaryValue = characters[currentIndex]
+      characters[currentIndex] = characters[randomIndex]
+      characters[randomIndex] = temporaryValue
     }
 
     // retorna 4 cartas
-    res.json({ cards: tmp.slice(0, 4) })
-  } catch(e) {
-    console.log(e)
+    res.json({ cards: characters.slice(0, 4) })
+  } catch (error) {
+    console.log(error)
     res.status(500).json({ error: 'erro ao buscar personagens' })
   }
 })
@@ -76,45 +90,55 @@ app.get('/api/pack', async (req, res) => {
 // pega feiticos disponiveis
 app.get('/api/spells', async (req, res) => {
   try {
-    var d = await fetch('https://api.potterdb.com/v1/spells?page[size]=100')
-    var r = await d.json()
+    var response = await fetch(
+      'https://api.potterdb.com/v1/spells?page[size]=100'
+    )
 
-    var tmp = []
-    for (var i = 0; i < r.data.length; i++) {
-      var s = r.data[i]
-      var a = s.attributes
-      if (!a.name || a.name == '') continue
+    var responseData = await response.json()
 
-      var dmg = 30
-      if (a.category == 'Charm') dmg = 45
-      if (a.category == 'Curse') dmg = 90
-      if (a.category == 'Hex') dmg = 65
-      if (a.category == 'Jinx') dmg = 55
-      if (a.category == 'Spell') dmg = 50
-      if (a.category == 'Transfiguration') dmg = 40
-      if (a.category == 'Counter-spell') dmg = 35
-      if (a.category == 'Healing spell') dmg = -40
+    var spells = []
 
-      var obj = {}
-      obj.id = s.id
-      obj.name = a.name
-      obj.effect = a.effect || 'Efeito desconhecido'
-      obj.category = a.category || 'Spell'
-      obj.light = a.light || 'Unknown'
-      obj.damage = dmg
+    for (var index = 0; index < responseData.data.length; index++) {
+      var spell = responseData.data[index]
+      var attributes = spell.attributes
 
-      tmp.push(obj)
+      if (!attributes.name || attributes.name == '') continue
+
+      var damage = 30
+
+      if (attributes.category == 'Charm') damage = 45
+      if (attributes.category == 'Curse') damage = 90
+      if (attributes.category == 'Hex') damage = 65
+      if (attributes.category == 'Jinx') damage = 55
+      if (attributes.category == 'Spell') damage = 50
+      if (attributes.category == 'Transfiguration') damage = 40
+      if (attributes.category == 'Counter-spell') damage = 35
+      if (attributes.category == 'Healing spell') damage = -40
+
+      var spellData = {}
+
+      spellData.id = spell.id
+      spellData.name = attributes.name
+      spellData.effect = attributes.effect || 'Efeito desconhecido'
+      spellData.category = attributes.category || 'Spell'
+      spellData.light = attributes.light || 'Unknown'
+      spellData.damage = damage
+
+      spells.push(spellData)
     }
 
     // embaralha e retorna 20
-    for (var x = tmp.length - 1; x > 0; x--) {
-      var y = Math.floor(Math.random() * (x + 1))
-      var z = tmp[x]; tmp[x] = tmp[y]; tmp[y] = z
+    for (var currentIndex = spells.length - 1; currentIndex > 0; currentIndex--) {
+      var randomIndex = Math.floor(Math.random() * (currentIndex + 1))
+
+      var temporaryValue = spells[currentIndex]
+      spells[currentIndex] = spells[randomIndex]
+      spells[randomIndex] = temporaryValue
     }
 
-    res.json({ spells: tmp.slice(0, 20) })
-  } catch(e) {
-    console.log(e)
+    res.json({ spells: spells.slice(0, 20) })
+  } catch (error) {
+    console.log(error)
     res.status(500).json({ error: 'erro ao buscar feiticos' })
   }
 })
@@ -122,65 +146,78 @@ app.get('/api/spells', async (req, res) => {
 // monta deck cpu com personagens aleatorios
 app.post('/api/cpu-deck', async (req, res) => {
   try {
-    var pg = Math.floor(Math.random() * 8) + 1
-    var d = await fetch('https://api.potterdb.com/v1/characters?page[size]=100&page[number]=' + pg)
-    var r = await d.json()
+    var pageNumber = Math.floor(Math.random() * 8) + 1
 
-    var tmp = []
-    for (var i = 0; i < r.data.length; i++) {
-      var c = r.data[i]
-      var a = c.attributes
-      if (!a.name || a.name == '' || !a.image) continue
+    var response = await fetch(
+      'https://api.potterdb.com/v1/characters?page[size]=100&page[number]=' + pageNumber
+    )
 
-      var pw = 50
-      if (a.house == 'Gryffindor') pw = 90
-      if (a.house == 'Slytherin') pw = 85
-      if (a.house == 'Hufflepuff') pw = 75
-      if (a.house == 'Ravenclaw') pw = 80
+    var responseData = await response.json()
 
-      var mg = 50
-      if (a.species == 'human') mg = 70
-      if (a.species == 'half-giant') mg = 88
-      if (a.species == 'giant') mg = 95
-      if (a.species == 'house elf') mg = 82
-      if (a.species == 'ghost') mg = 60
-      if (a.species == 'werewolf') mg = 91
-      if (a.species == 'vampire') mg = 87
-      if (a.species == 'centaur') mg = 78
+    var characters = []
 
-      var df = 50
-      if (a.ancestry == 'pure-blood') df = 90
-      if (a.ancestry == 'half-blood') df = 75
-      if (a.ancestry == 'muggle-born') df = 70
-      if (a.ancestry == 'muggle') df = 40
-      if (a.ancestry == 'squib') df = 35
+    for (var index = 0; index < responseData.data.length; index++) {
+      var character = responseData.data[index]
+      var attributes = character.attributes
 
-      var hp = df + Math.floor(Math.random() * 20) + 80
+      if (!attributes.name || attributes.name == '' || !attributes.image) continue
 
-      var obj = {}
-      obj.id = c.id
-      obj.name = a.name
-      obj.house = a.house || 'Unknown'
-      obj.species = a.species || 'Unknown'
-      obj.ancestry = a.ancestry || 'Unknown'
-      obj.image = a.image
-      obj.power = pw
-      obj.magic = mg
-      obj.defense = df
-      obj.hp = hp
-      obj.maxHp = hp
+      var power = 50
 
-      tmp.push(obj)
+      if (attributes.house == 'Gryffindor') power = 90
+      if (attributes.house == 'Slytherin') power = 85
+      if (attributes.house == 'Hufflepuff') power = 75
+      if (attributes.house == 'Ravenclaw') power = 80
+
+      var magic = 50
+
+      if (attributes.species == 'human') magic = 70
+      if (attributes.species == 'half-giant') magic = 88
+      if (attributes.species == 'giant') magic = 95
+      if (attributes.species == 'house elf') magic = 82
+      if (attributes.species == 'ghost') magic = 60
+      if (attributes.species == 'werewolf') magic = 91
+      if (attributes.species == 'vampire') magic = 87
+      if (attributes.species == 'centaur') magic = 78
+
+      var defense = 50
+
+      if (attributes.ancestry == 'pure-blood') defense = 90
+      if (attributes.ancestry == 'half-blood') defense = 75
+      if (attributes.ancestry == 'muggle-born') defense = 70
+      if (attributes.ancestry == 'muggle') defense = 40
+      if (attributes.ancestry == 'squib') defense = 35
+
+      var hp = defense + Math.floor(Math.random() * 20) + 80
+
+      var characterData = {}
+
+      characterData.id = character.id
+      characterData.name = attributes.name
+      characterData.house = attributes.house || 'Unknown'
+      characterData.species = attributes.species || 'Unknown'
+      characterData.ancestry = attributes.ancestry || 'Unknown'
+      characterData.image = attributes.image
+      characterData.power = power
+      characterData.magic = magic
+      characterData.defense = defense
+      characterData.hp = hp
+      characterData.maxHp = hp
+
+      characters.push(characterData)
     }
 
-    for (var x = tmp.length - 1; x > 0; x--) {
-      var y = Math.floor(Math.random() * (x + 1))
-      var z = tmp[x]; tmp[x] = tmp[y]; tmp[y] = z
+    for (var currentIndex = characters.length - 1; currentIndex > 0; currentIndex--) {
+      var randomIndex = Math.floor(Math.random() * (currentIndex + 1))
+
+      var temporaryValue = characters[currentIndex]
+      characters[currentIndex] = characters[randomIndex]
+      characters[randomIndex] = temporaryValue
     }
 
-    res.json({ deck: tmp.slice(0, 2) })
-  } catch(e) {
-    console.log(e)
+    res.json({ deck: characters.slice(0, 2) })
+  } catch (error) {
+    console.log(error)
     res.status(500).json({ error: 'erro ao montar deck cpu' })
   }
 })
